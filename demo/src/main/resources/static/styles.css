@@ -1,0 +1,53 @@
+/* 背景設置為溫暖的米色 */
+body {
+    background-color: #f4ecd8; /* 淡米色背景 */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #4e3d2c; /* 深棕色文字 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* 容器樣式 */
+.container {
+    background-color: #fff3e0; /* 淡黃色容器 */
+    padding: 30px 50px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    width: 400px;
+    text-align: center;
+}
+
+/* 標題樣式 */
+h1 {
+    margin-bottom: 20px;
+    color: #8b5e3c; /* 中棕色標題 */
+    font-size: 2em;
+}
+
+/* 表單樣式 */
+form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* 搜尋輸入框樣式 */
+input[type="text"] {
+    flex: 1;
+    padding: 12px 20px;
+    border: 2px solid #a67855; /* 黃棕色邊框 */
+    border-radius: 6px 0 0 6px;
+    outline: none;
+    font-size: 1em;
+    transition: border-color 0.3s;
+}
+
+input[type="text"]:focus {
+    border-color: #d4a373; /* 聚焦時邊框顏色變化 */
+}
+
+/* 搜尋按鈕樣
