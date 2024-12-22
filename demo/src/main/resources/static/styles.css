@@ -49,6 +49,24 @@ input[type="text"] {
 input[type="text"]:focus {
     border-color: #d4a373; /* 聚焦時邊框顏色變化 */
 }
+
+/* 搜尋按鈕樣式 */
+button {
+    padding: 12px 20px;
+    border: 2px solid #a67855; /* 黃棕色邊框 */
+    border-radius: 0 6px 6px 0;
+    background-color: #a67855;
+    color: white;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #d4a373; /* 滑鼠懸停時變化 */
+}
+
+/* 結果區域樣式 */
 #results {
     max-height: 70vh; /* 限制容器高度為視窗高度的 70% */
     overflow-y: auto; /* 啟用垂直滾動 */
@@ -58,4 +76,34 @@ input[type="text"]:focus {
     background-color: #fff;
 }
 
-/* 搜尋按鈕樣
+/* 相關搜尋區域樣式 */
+.related-keywords {
+    margin-top: 20px;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    text-align: left;
+}
+
+.related-keywords h3 {
+    margin-bottom: 10px;
+    font-size: 1.2em;
+    color: #8b5e3c;
+}
+
+/* 關鍵字按鈕樣式 */
+.keyword-button {
+    margin: 5px 5px 0 0;
+    padding: 8px 12px;
+    border: 1px solid #a67855;
+    border-radius: 5px;
+    background-color: #fff3e0;
+    color: #8b5e3c;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.keyword-button:hover {
+    background-color: #d4a373;
+    color: #fff;
+}

@@ -1,7 +1,7 @@
 package google.demo.controller;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -21,12 +21,12 @@ public class GoogleSearchController {
     private GoogleQueryService googleQueryService;
 
     @GetMapping("/search")
-    public HashMap<String, String> search(@RequestParam("q") String query) {
+    public LinkedHashMap<String, Object> search(@RequestParam("q") String query) {
         try {
             return googleQueryService.search(query);
         } catch (IOException e) {
             e.printStackTrace();
-            return new HashMap<>();
+            return new LinkedHashMap<>();
         }
     }
 }

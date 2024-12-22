@@ -25,7 +25,7 @@ public class GoogleQueryService {
     private String content;
 
     public GoogleQueryService() {
-        // 空的構造函數
+        // 空的建構函式
     }
 
     private String fetchPageContent(String url) {
@@ -45,63 +45,89 @@ public class GoogleQueryService {
         }
     }
 
-    public LinkedHashMap<String, String> search(String searchKeyword) throws IOException {
-    this.searchKeyword = searchKeyword;
-    try {
-        String encodeKeyword = URLEncoder.encode(searchKeyword, "utf-8");
-        this.url = "https://www.google.com/search?q=" + encodeKeyword + "&oe=utf8&num=20";
-        System.out.println("[DEBUG] Generated URL: " + url);
-    } catch (Exception e) {
-        System.out.println("[ERROR] Failed to encode keyword: " + e.getMessage());
-    }
-
-    content = fetchContent();
-
-    // 定义关键词权重
-    HashMap<String, Integer> weights = new HashMap<>();
-    weights.put("白飯", 5);
-    weights.put("性價比", 3);
-    weights.put("不限時", 2);
-
-    // 保存结果与分数
-    List<SearchResult> scoredResults = new ArrayList<>();
-    Document doc = Jsoup.parse(content);
-    Elements lis = doc.select("div.g");
-
-    for (Element li : lis) {
+    public LinkedHashMap<String, Object> search(String searchKeyword) throws IOException {
+        this.searchKeyword = searchKeyword;
         try {
-            String citeUrl = li.select("a").attr("href").replace("/url?q=", "").split("&")[0];
-            String title = li.select("a > h3").text();
-
-            if (title.equals("")) {
-                continue;
-            }
-
-            String pageContent = fetchPageContent(citeUrl);
-
-            // 计算分数（包括标题和内容）
-            int titleScore = calculateScore(title, weights);
-            int contentScore = calculateScore(pageContent, weights);
-            int totalScore = titleScore + contentScore;
-
-            scoredResults.add(new SearchResult(title, citeUrl, totalScore));
-            System.err.println("[DEBUG] totalScore: " + totalScore);
+            String encodeKeyword = URLEncoder.encode(searchKeyword, "utf-8");
+            this.url = "https://www.google.com/search?q=" + encodeKeyword + "&oe=utf8&num=20";
+            System.out.println("[DEBUG] Generated URL: " + url);
         } catch (Exception e) {
-            System.out.println("[ERROR] Failed to process element: " + e.getMessage());
+            System.out.println("[ERROR] Failed to encode keyword: " + e.getMessage());
         }
+
+        content = fetchContent();
+
+        // 定義關鍵字權重
+        HashMap<String, Integer> weights = new HashMap<>();
+        weights.put("白飯", 5);
+        weights.put("性價比", 3);
+        weights.put("不限時", 2);
+
+        // 保存結果與分數
+        List<SearchResult> scoredResults = new ArrayList<>();
+        Document doc = Jsoup.parse(content);
+        Elements lis = doc.select("div.g");
+
+        for (Element li : lis) {
+            try {
+                String citeUrl = li.select("a").attr("href").replace("/url?q=", "").split("&")[0];
+                String title = li.select("a > h3").text();
+
+                if (title.equals("")) {
+                    continue;
+                }
+
+                String pageContent = fetchPageContent(citeUrl);
+
+                // 計算分數（包括標題和內容）
+                int titleScore = calculateScore(title, weights);
+                int contentScore = calculateScore(pageContent, weights);
+                int totalScore = titleScore + contentScore;
+
+                scoredResults.add(new SearchResult(title, citeUrl, totalScore));
+                System.err.println("[DEBUG] totalScore: " + totalScore);
+            } catch (Exception e) {
+                System.out.println("[ERROR] Failed to process element: " + e.getMessage());
+            }
+        }
+
+        // 提取推薦的關鍵字
+        List<String> relatedKeywords = extractRelatedKeywords(doc);
+
+        // 排序結果（根據分數降序排列）
+        scoredResults.sort((a, b) -> Integer.compare(b.score, a.score));
+
+        // 保存排序後的結果
+        LinkedHashMap<String, String> sortedResults = new LinkedHashMap<>();
+        for (SearchResult result : scoredResults) {
+            sortedResults.put(result.title, result.url);
+        }
+
+        System.err.println("[DEBUG] Results:" + sortedResults);
+
+        // 返回結果
+        LinkedHashMap<String, Object> response = new LinkedHashMap<>();
+        response.put("results", sortedResults);
+        response.put("relatedKeywords", relatedKeywords);
+
+        return response;
     }
 
-    // 排序结果（根据分数降序排列）
-    scoredResults.sort((a, b) -> Integer.compare(b.score, a.score));
-
-    // 返回排序后的结果
-    LinkedHashMap<String, String> sortedResults = new LinkedHashMap<>();
-    for (SearchResult result : scoredResults) {
-        sortedResults.put(result.title, result.url);
+    private List<String> extractRelatedKeywords(Document doc) {
+        List<String> relatedKeywords = new ArrayList<>();
+        
+        // 嘗試調整選擇器來匹配推薦關鍵字
+        Elements relatedElements = doc.select("div.mtv5bd"); // Google 搜索推薦關鍵字的 CSS 類
+        for (Element element : relatedElements) {
+            String keyword = element.text();
+            if (!keyword.isEmpty()) {
+                relatedKeywords.add(keyword);
+            }
+        }
+        
+        return relatedKeywords;
     }
-    System.err.println("[DEBUG]Results:" + sortedResults);
-    return sortedResults;
-}
+    
 
     private String fetchContent() throws IOException {
         StringBuilder retVal = new StringBuilder();
@@ -113,13 +139,12 @@ public class GoogleQueryService {
             InputStream in = conn.getInputStream();
 
             InputStreamReader inReader = new InputStreamReader(in, "utf-8");
-            BufferedReader bufReader = new BufferedReader(inReader);
+            BufferedReader reader = new BufferedReader(inReader);
             String line;
-
-            while ((line = bufReader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 retVal.append(line);
             }
-            bufReader.close();
+            reader.close();
         } catch (Exception e) {
             System.out.println("[ERROR] Failed to fetch content: " + e.getMessage());
         }
@@ -127,26 +152,61 @@ public class GoogleQueryService {
         return retVal.toString();
     }
 
-    private int calculateScore(String text, HashMap<String, Integer> weights) {
+    private int calculateScore(String content, HashMap<String, Integer> weights) {
         int score = 0;
         for (String keyword : weights.keySet()) {
-            // 計算每個關鍵字出現的次數
-            int occurrences = text.split(keyword, -1).length - 1;
-            score += occurrences * weights.get(keyword); // 加上權重
+            if (content.contains(keyword)) {
+                score += weights.get(keyword);
+            }
         }
         return score;
     }
 
-    // 搜尋結果類（用於儲存標題、URL 和分數）
-    class SearchResult {
-        String title;
-        String url;
-        int score;
+    // SearchResult 內部類別
+    public static class SearchResult {
+        private String title;
+        private String url;
+        private int score;
 
+        // 構造函數
         public SearchResult(String title, String url, int score) {
             this.title = title;
             this.url = url;
             this.score = score;
+        }
+
+        // Getter 和 Setter
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+
+        public int getScore() {
+            return score;
+        }
+
+        public void setScore(int score) {
+            this.score = score;
+        }
+
+        @Override
+        public String toString() {
+            return "SearchResult{" +
+                    "title='" + title + '\'' +
+                    ", url='" + url + '\'' +
+                    ", score=" + score +
+                    '}';
         }
     }
 }

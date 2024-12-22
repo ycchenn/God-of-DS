@@ -9,14 +9,14 @@ document.getElementById('search-form').addEventListener('submit', function (e) {
         .then(data => {
             resultsDiv.innerHTML = '';
 
-            // 檢查數據是否為空
-            if (!data || Object.keys(data).length === 0) {
+            // 顯示搜尋結果
+            const results = data.results;
+            if (!results || Object.keys(results).length === 0) {
                 resultsDiv.innerHTML = '<p>沒有找到結果。</p>';
                 return;
             }
 
-            // 迭代後端返回的結果並生成HTML
-            for (const [title, url] of Object.entries(data)) {
+            for (const [title, url] of Object.entries(results)) {
                 const itemDiv = document.createElement('div');
                 itemDiv.classList.add('result-item');
 
@@ -27,6 +27,27 @@ document.getElementById('search-form').addEventListener('submit', function (e) {
 
                 itemDiv.appendChild(link);
                 resultsDiv.appendChild(itemDiv);
+            }
+
+            // 顯示相關搜尋關鍵字
+            const relatedKeywords = data.relatedKeywords;
+            if (relatedKeywords && relatedKeywords.length > 0) {
+                const relatedDiv = document.createElement('div');
+                relatedDiv.classList.add('related-keywords');
+                relatedDiv.innerHTML = '<h3>其他人也搜尋：</h3>';
+
+                relatedKeywords.forEach(keyword => {
+                    const keywordButton = document.createElement('button');
+                    keywordButton.textContent = keyword;
+                    keywordButton.classList.add('keyword-button');
+                    keywordButton.addEventListener('click', () => {
+                        document.getElementById('query').value = keyword;
+                        document.getElementById('search-form').dispatchEvent(new Event('submit'));
+                    });
+                    relatedDiv.appendChild(keywordButton);
+                });
+
+                resultsDiv.appendChild(relatedDiv);
             }
         })
         .catch(error => {
