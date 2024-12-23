@@ -9,27 +9,35 @@ document.getElementById('search-form').addEventListener('submit', function (e) {
         .then(data => {
             resultsDiv.innerHTML = '';
 
-            // 顯示搜尋結果
+            
             const results = data.results;
             if (!results || Object.keys(results).length === 0) {
                 resultsDiv.innerHTML = '<p>沒有找到結果。</p>';
                 return;
             }
 
+            const resultsContainer = document.createElement('div');
+            resultsContainer.classList.add('results-container');
+
             for (const [title, url] of Object.entries(results)) {
-                const itemDiv = document.createElement('div');
-                itemDiv.classList.add('result-item');
+                const card = document.createElement('div');
+                card.classList.add('result-card');
 
-                const link = document.createElement('a');
-                link.href = url;
-                link.target = '_blank';
-                link.textContent = title;
+                
+                card.addEventListener('click', () => {
+                    window.open(url, '_blank');
+                });
 
-                itemDiv.appendChild(link);
-                resultsDiv.appendChild(itemDiv);
+                const cardTitle = document.createElement('h3');
+                cardTitle.textContent = title;
+
+                card.appendChild(cardTitle);
+                resultsContainer.appendChild(card);
             }
 
-            // 顯示相關搜尋關鍵字
+            resultsDiv.appendChild(resultsContainer);
+
+            
             const relatedKeywords = data.relatedKeywords;
             if (relatedKeywords && relatedKeywords.length > 0) {
                 const relatedDiv = document.createElement('div');
