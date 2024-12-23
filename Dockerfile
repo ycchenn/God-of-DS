@@ -3,7 +3,7 @@ FROM eclipse-temurin:21-jdk
 # 設定工作目錄
 WORKDIR /app
 
-# 複製專案檔案到容器內
+# 複製專案文件
 COPY . /app
 
 # 確保 Maven Wrapper 可執行
