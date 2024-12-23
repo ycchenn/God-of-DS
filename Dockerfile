@@ -10,5 +10,10 @@ COPY . /app
 # 使用 Maven Wrapper 進行建構
 RUN ./mvnw package
 
+# 暴露 8080 端口
+EXPOSE 8080
+
 # 設定啟動命令，啟動生成的 JAR 檔案
 CMD ["java", "-jar", "target/demo-0.0.1-SNAPSHOT.jar"]
+
+
