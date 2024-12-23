@@ -1,14 +1,16 @@
-# 使用支援 Java 21 的基礎映像
 FROM eclipse-temurin:21-jdk
 
-# 設定容器內的工作目錄
+# 設定工作目錄
 WORKDIR /app
 
-# 複製專案檔案到容器內
+# 複製專案文件
 COPY . /app
 
-# 使用 Maven Wrapper 進行建構
-RUN ./mvnw package
+# 確保 Maven Wrapper 可執行
+RUN chmod +x ./mvnw
 
-# 設定啟動命令，啟動生成的 JAR 檔案
+# 進行構建
+RUN ./mvnw clean package
+
+# 啟動應用
 CMD ["java", "-jar", "target/demo-0.0.1-SNAPSHOT.jar"]
