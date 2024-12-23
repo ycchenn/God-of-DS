@@ -1,0 +1,148 @@
+/* 背景設置為清新的淺藍色 */
+body {
+    background-color: #eaf7fa; /* 淺藍色背景 */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #2c3e50; /* 深藍灰文字 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* 容器樣式 */
+.container {
+    background-color: #ffffff; /* 白色容器 */
+    padding: 30px 50px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    width: 400px;
+    text-align: center;
+}
+
+/* 標題樣式 */
+h1 {
+    margin-bottom: 20px;
+    color: #16a085; /* 綠松石色標題 */
+    font-size: 2em;
+}
+
+/* 表單樣式 */
+form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* 搜尋輸入框樣式 */
+input[type="text"] {
+    flex: 1;
+    padding: 12px 20px;
+    border: 2px solid #1abc9c; /* 綠松石色邊框 */
+    border-radius: 6px 0 0 6px;
+    outline: none;
+    font-size: 1em;
+    transition: border-color 0.3s;
+}
+
+input[type="text"]:focus {
+    border-color: #48c9b0; /* 聚焦時邊框顏色變化 */
+}
+
+/* 搜尋按鈕樣式 */
+button {
+    padding: 12px 20px;
+    border: 2px solid #1abc9c; /* 綠松石色邊框 */
+    border-radius: 0 6px 6px 0;
+    background-color: #1abc9c;
+    color: white;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #48c9b0; /* 滑鼠懸停時變化 */
+}
+
+/* 結果容器 */
+#results {
+    margin-top: 20px;
+    max-height: 70vh; /* 限制容器高度為視窗高度的 70% */
+    overflow-y: auto; /* 啟用垂直滾動 */
+}
+
+/* 卡片容器 */
+.results-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+/* 卡片樣式 */
+.result-card {
+    background-color: #ecf0f1; /* 淺灰藍色背景 */
+    border: 1px solid #bdc3c7; /* 灰色邊框 */
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.result-card h3 {
+    font-size: 18px;
+    margin: 0 0 10px;
+    color: #2c3e50; /* 深藍灰文字 */
+}
+
+.result-card p {
+    font-size: 14px;
+    color: #7f8c8d; /* 灰色文字 */
+    word-break: break-word;
+}
+
+/* 點擊動畫效果 */
+.result-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.result-card:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 相關搜尋關鍵字 */
+.related-keywords {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.related-keywords h3 {
+    margin-bottom: 10px;
+    font-size: 1.2em;
+    color: #16a085;
+}
+
+.keyword-button {
+    margin: 5px 5px 0 0;
+    padding: 8px 12px;
+    border: 1px solid #1abc9c;
+    border-radius: 5px;
+    background-color: #ecf0f1;
+    color: #2c3e50;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.keyword-button:hover {
+    background-color: #1abc9c;
+    color: #fff;
+}
+
+
+
