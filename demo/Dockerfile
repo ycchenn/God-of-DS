@@ -1,17 +1,15 @@
-# Dockerfile
 FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
 
-# 複製 demo 資料夾內容
+# 複製 demo 資料夾的內容
 COPY . /app
 
 # 確保 Maven Wrapper 可執行
-RUN chmod +x ./mvnw
+RUN chmod +x mvnw
 
 # 進行構建
 RUN ./mvnw clean package
 
 # 啟動應用
-CMD ["java", "-jar", "target/your-app-name.jar"]
-
+CMD ["java", "-jar", "target/demo-0.0.1-SNAPSHOT.jar"]
