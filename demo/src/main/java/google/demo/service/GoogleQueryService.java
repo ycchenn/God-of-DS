@@ -66,7 +66,7 @@ public class GoogleQueryService {
         // 生成 Google 搜索 URL
         try {
             String encodeKeyword = URLEncoder.encode(this.searchKeyword, "utf-8");
-            this.url = "https://www.google.com/search?q=" + encodeKeyword + "&oe=utf8&num=20";
+            this.url = "https://www.google.com/search?q=" + encodeKeyword + "&oe=utf8&num=20&hl=zh-TW";
             System.out.println("[DEBUG] Generated URL: " + url);
         } catch (Exception e) {
             System.err.println("[ERROR] Failed to encode keyword: " + e.getMessage());
