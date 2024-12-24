@@ -8,9 +8,15 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.regex.Pattern;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -24,88 +30,97 @@ public class GoogleQueryService {
     private String url;
     private String content;
 
+    // 關鍵字權重（可加速查找）
+    private static final Map<String, Integer> WEIGHTS = new HashMap<>();
+
+    static {
+        WEIGHTS.put("白飯", 5);
+        WEIGHTS.put("性價比", 3);
+        WEIGHTS.put("不限時", 2);
+    }
+
     public GoogleQueryService() {
         // 空的建構函式
     }
 
     private String fetchPageContent(String url) {
         try {
-            // 使用 Jsoup 抓取網頁
             Document doc = Jsoup.connect(url)
                     .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
+                    .timeout(5000) // 設置超時
                     .get();
-
-            // 提取主要內容
             System.out.println("[DEBUG] Fetched URL: " + url);
             System.out.println("[DEBUG] Page Title: " + doc.title());
-            return doc.body().text(); // 抓取網頁正文文字
+            return doc.body().text();
         } catch (IOException e) {
-            System.out.println("[ERROR] Failed to fetch content for URL: " + url);
+            System.err.println("[ERROR] Failed to fetch content for URL: " + url);
             return "";
         }
     }
 
     public LinkedHashMap<String, Object> search(String searchKeyword) throws IOException {
-        this.searchKeyword = searchKeyword;
+        // 自動加上 "美食" 關鍵字
+        this.searchKeyword = searchKeyword + " 美食";
+    
+        // 生成 Google 搜索 URL
         try {
-            String encodeKeyword = URLEncoder.encode(searchKeyword, "utf-8");
+            String encodeKeyword = URLEncoder.encode(this.searchKeyword, "utf-8");
             this.url = "https://www.google.com/search?q=" + encodeKeyword + "&oe=utf8&num=20";
             System.out.println("[DEBUG] Generated URL: " + url);
         } catch (Exception e) {
-            System.out.println("[ERROR] Failed to encode keyword: " + e.getMessage());
+            System.err.println("[ERROR] Failed to encode keyword: " + e.getMessage());
         }
-
+    
         content = fetchContent();
-
-        // 定義關鍵字權重
-        HashMap<String, Integer> weights = new HashMap<>();
-        weights.put("白飯", 5);
-        weights.put("性價比", 3);
-        weights.put("不限時", 2);
-
-        // 保存結果與分數
-        List<SearchResult> scoredResults = new ArrayList<>();
+        if (content == null || content.isEmpty()) {
+            System.err.println("[ERROR] Google search returned empty content.");
+            return new LinkedHashMap<>();
+        }
+    
+        // 解析搜索結果頁面
         Document doc = Jsoup.parse(content);
         Elements lis = doc.select("div.g");
+        System.out.println("[DEBUG] Found search results: " + lis.size());
+    
+        if (lis.isEmpty()) {
+            System.err.println("[ERROR] No search results found.");
+            return new LinkedHashMap<>();
+        }
+
+        // 並行處理結果並計算分數
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+        List<Future<SearchResult>> futureResults = new ArrayList<>();
 
         for (Element li : lis) {
+            futureResults.add(executor.submit(() -> processSearchResult(li)));
+        }
+
+        // 收集結果
+        List<SearchResult> scoredResults = new ArrayList<>();
+        for (Future<SearchResult> future : futureResults) {
             try {
-                String citeUrl = li.select("a").attr("href").replace("/url?q=", "").split("&")[0];
-                String title = li.select("a > h3").text();
-
-                if (title.equals("")) {
-                    continue;
+                SearchResult result = future.get();
+                if (result != null) {
+                    scoredResults.add(result);
                 }
-
-                String pageContent = fetchPageContent(citeUrl);
-
-                // 計算分數（包括標題和內容）
-                int titleScore = calculateScore(title, weights);
-                int contentScore = calculateScore(pageContent, weights);
-                int totalScore = titleScore + contentScore;
-
-                scoredResults.add(new SearchResult(title, citeUrl, totalScore));
-                System.err.println("[DEBUG] totalScore: " + totalScore);
             } catch (Exception e) {
-                System.out.println("[ERROR] Failed to process element: " + e.getMessage());
+                System.err.println("[ERROR] Failed to process search result: " + e.getMessage());
             }
         }
+        executor.shutdown();
+
+        // 排序結果（使用優化排序算法）
+        scoredResults.sort(Comparator.comparingInt(SearchResult::getScore).reversed());
 
         // 提取推薦的關鍵字
         List<String> relatedKeywords = extractRelatedKeywords(doc);
 
-        // 排序結果（根據分數降序排列）
-        scoredResults.sort((a, b) -> Integer.compare(b.score, a.score));
-
-        // 保存排序後的結果
+        // 組裝返回結果
         LinkedHashMap<String, String> sortedResults = new LinkedHashMap<>();
         for (SearchResult result : scoredResults) {
             sortedResults.put(result.title, result.url);
         }
 
-        System.err.println("[DEBUG] Results:" + sortedResults);
-
-        // 返回結果
         LinkedHashMap<String, Object> response = new LinkedHashMap<>();
         response.put("results", sortedResults);
         response.put("relatedKeywords", relatedKeywords);
@@ -113,21 +128,41 @@ public class GoogleQueryService {
         return response;
     }
 
+    private SearchResult processSearchResult(Element li) {
+        try {
+            String citeUrl = li.select("a").attr("href").replace("/url?q=", "").split("&")[0];
+            String title = li.select("a > h3").text();
+
+            if (title.isEmpty()) {
+                return null;
+            }
+
+            // 頁面內容（延遲加載避免阻塞主線程）
+            String pageContent = fetchPageContent(citeUrl);
+
+            // 使用正規表達式和高效字典計算分數
+            int titleScore = calculateScore(title);
+            int contentScore = calculateScore(pageContent);
+            int totalScore = titleScore + contentScore;
+
+            return new SearchResult(title, citeUrl, totalScore);
+        } catch (Exception e) {
+            System.err.println("[ERROR] Failed to process result: " + e.getMessage());
+            return null;
+        }
+    }
+
     private List<String> extractRelatedKeywords(Document doc) {
         List<String> relatedKeywords = new ArrayList<>();
-        
-        // 嘗試調整選擇器來匹配推薦關鍵字
-        Elements relatedElements = doc.select("div.mtv5bd"); // Google 搜索推薦關鍵字的 CSS 類
+        Elements relatedElements = doc.select("div.mtv5bd");
         for (Element element : relatedElements) {
             String keyword = element.text();
             if (!keyword.isEmpty()) {
                 relatedKeywords.add(keyword);
             }
         }
-        
         return relatedKeywords;
     }
-    
 
     private String fetchContent() throws IOException {
         StringBuilder retVal = new StringBuilder();
@@ -146,18 +181,18 @@ public class GoogleQueryService {
             }
             reader.close();
         } catch (Exception e) {
-            System.out.println("[ERROR] Failed to fetch content: " + e.getMessage());
+            System.err.println("[ERROR] Failed to fetch content: " + e.getMessage());
         }
 
         return retVal.toString();
     }
 
-    private int calculateScore(String content, HashMap<String, Integer> weights) {
+    private int calculateScore(String content) {
         int score = 0;
-        for (String keyword : weights.keySet()) {
-            if (content.contains(keyword)) {
-                score += weights.get(keyword);
-            }
+        for (Map.Entry<String, Integer> entry : WEIGHTS.entrySet()) {
+            Pattern pattern = Pattern.compile("\\b" + Pattern.quote(entry.getKey()) + "\\b", Pattern.CASE_INSENSITIVE);
+            int matches = (int) pattern.matcher(content).results().count();
+            score += matches * entry.getValue();
         }
         return score;
     }
@@ -168,36 +203,22 @@ public class GoogleQueryService {
         private String url;
         private int score;
 
-        // 構造函數
         public SearchResult(String title, String url, int score) {
             this.title = title;
             this.url = url;
             this.score = score;
         }
 
-        // Getter 和 Setter
         public String getTitle() {
             return title;
-        }
-
-        public void setTitle(String title) {
-            this.title = title;
         }
 
         public String getUrl() {
             return url;
         }
 
-        public void setUrl(String url) {
-            this.url = url;
-        }
-
         public int getScore() {
             return score;
-        }
-
-        public void setScore(int score) {
-            this.score = score;
         }
 
         @Override
