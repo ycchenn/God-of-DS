@@ -88,7 +88,7 @@ public class GoogleQueryService {
         }
 
         // 並行處理結果並計算分數
-        ExecutorService executor = Executors.newFixedThreadPool(80);
+        ExecutorService executor = Executors.newFixedThreadPool(100);
         List<Future<SearchResult>> futureResults = new ArrayList<>();
 
         for (Element li : lis) {
