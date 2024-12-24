@@ -34,9 +34,14 @@ public class GoogleQueryService {
     private static final Map<String, Integer> WEIGHTS = new HashMap<>();
 
     static {
-        WEIGHTS.put("白飯", 5);
+        WEIGHTS.put("白飯", 2);
         WEIGHTS.put("性價比", 3);
         WEIGHTS.put("不限時", 2);
+        WEIGHTS.put("平價", 4);
+        WEIGHTS.put("學生", 3);
+        WEIGHTS.put("美食", 5);
+        WEIGHTS.put("聚餐", 4);
+        WEIGHTS.put("宵夜", 4);
     }
 
     public GoogleQueryService() {
