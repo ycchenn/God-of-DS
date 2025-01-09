@@ -38,6 +38,7 @@ public class GoogleQueryService {
         WEIGHTS.put("平價", 3);
         WEIGHTS.put("學生", 3);
         WEIGHTS.put("聚餐", 4);
+        WEIGHTS.put("政大", 4);
     }
 
     public GoogleQueryService() {
